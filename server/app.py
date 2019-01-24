@@ -1,22 +1,48 @@
-#!./bin/python
+#!/Users/DanYoung/Documents/workspace/ToDoAgain/flask/bin/python
 from flask import Flask, jsonify, abort, make_response, request, url_for
 from flask_httpauth import HTTPBasicAuth, make_response
+import redis
 
 app = Flask(__name__)
-
 # TODO: Create a user database (Redis)
 # TODO: Setup Google SSO 
-auth = HTTPBasicAuth()
+# TODO: User Registration
+# auth = HTTPBasicAuth()
 
-@auth.get_password
-def get_password(username):
-    if username == 'miguel':
-        return 'python'
-    return None
+redis_host = "localhost"
+redis_port = 6379
+redis_password = ""
 
-@auth.error_handler
-def unauthorized():
-    return make_response(jsonify({'error': 'Unauthorized access'}), 401)
+@app.route("/redis_health")
+def hello_redis():
+    """Example Hello Redis Program"""
+    
+    # step 3: create the Redis Connection object
+    try:
+    
+        # The decode_repsonses flag here directs the client to convert the responses from Redis into Python strings
+        # using the default encoding utf-8.  This is client specific.
+        r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
+    
+        # step 4: Set the hello message in Redis 
+        r.set("msg:hello", "Hello Redis!!!")
+
+        # step 5: Retrieve the hello message from Redis
+        msg = r.get("msg:hello")
+        return msg, 201        
+    
+    except Exception as e:
+        return e, 201
+
+# @auth.get_password
+# def get_password(username):
+#     if username == 'miguel':
+#         return 'python'
+#     return None
+
+# @auth.error_handler
+# def unauthorized():
+#     return make_response(jsonify({'error': 'Unauthorized access'}), 401)
 
 
 # TODO: Redefine the tasks model, and create reusable collections of tasks
@@ -47,15 +73,18 @@ def make_public_task(task):
             new_task[field] = task[field]
     return new_task
 
+# TODO: Pagination argument
+# TODO: Filter options. Think about rows with which to filter
+# TODO: SEARCH
 # GET request for all task items in Database
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
-@auth.login_required
+# @auth.login_required
 def get_tasks():
     return jsonify({'tasks': [make_public_task(task) for task in tasks]})
 
 # GET request for single task item in Database
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['GET'])
-@auth.login_required
+# @auth.login_required
 def get_task(task_id):
     task = [task for task in tasks if task['id'] == task_id]
     if len(task) == 0:
@@ -68,7 +97,7 @@ def get_task(task_id):
 # TODO: urls by title slug
 
 @app.route('/todo/api/v1.0/tasks', methods=['POST'])
-@auth.login_required
+# @auth.login_required
 def create_task():
     # request will pass the data, but only if it came marked as JSON
     if not request.json or not 'title' in request.json:
@@ -88,7 +117,7 @@ def create_task():
 
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['PUT'])
-@auth.login_required
+# @auth.login_required
 def update_task(task_id):
     print(request.json)
     # Find the task in the list of tasks
@@ -110,7 +139,7 @@ def update_task(task_id):
     return jsonify({'task': task[0]})
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['DELETE'])
-@auth.login_required
+# @auth.login_required
 def delete_task(task_id):
     task = [task for task in tasks if task['id'] == task_id]
     if len(task) == 0:
@@ -119,8 +148,7 @@ def delete_task(task_id):
     return jsonify({'result': True})
 
 @app.errorhandler(404)
-@auth.login_required
-
+# @auth.login_required
 def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
