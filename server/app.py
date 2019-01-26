@@ -25,21 +25,21 @@ def hello_redis():
 
 # TODO: Redefine the tasks model, and create reusable collections of tasks
 # TODO: Create a database of tasks / Implement Redis
-tasks = [
-    {
-        'id': 1,
-        'title': u'Buy groceries',
-        'description': u'Milk, Cheese, Pizza, Fruit, Tylenol', 
-        'done': False
-    },
-    {
-        'id': 2,
-        'title': u'Learn Python',
-        'description': u'Need to find a good Python tutorial on the web', 
-        'done': False
-    }
-]
-@app.route("/set_test", methods=["POST"])
+# tasks = [
+#     {
+#         'id': 1,
+#         'title': u'Buy groceries',
+#         'description': u'Milk, Cheese, Pizza, Fruit, Tylenol', 
+#         'done': False
+#     },
+#     {
+#         'id': 2,
+#         'title': u'Learn Python',
+#         'description': u'Need to find a good Python tutorial on the web', 
+#         'done': False
+#     }
+# ]
+@app.route("/reddis/todo/api/v1.0/tasks", methods=["POST"])
 def set_tasks_test():
     print(request.json)
     if not request.json or not 'title' in request.json:
@@ -48,32 +48,23 @@ def set_tasks_test():
         try:
             # The decode_repsonses flag here directs the client to convert the responses from Redis into Python strings
             # using the default encoding utf-8.  This is client specific.
-            r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
-        
-            # task = {
-            #     'id': tasks[-1]['id'] + 1,
-            #     'category': request.json['category'],
-            #     'title': request.json['title'],
-            #     'description': request.json.get('description', ""),
-            #     'done': False
-            # }
+            r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)       
             
-            # step 4: Set the hello message in Redis 
-            key = r.incr("tasks:task_id", 1)
-            r.set((key), str(request.json), nx=True)
+            cat = request.json['category']
+            hash_name = f"todos:{cat}:tasks"
+            r.hsetnx(hash_name, request.json["title"], str(request.json))
 
-            # step 5: Retrieve the hello message from Redis
-            msg = r.get(key)
-            return msg, 201        
-        
+            msg = r.hgetall(hash_name)
+            return jsonify(msg), 201
+
         except Exception as e:
             return e, 201
 
 @app.route("/get_test")
 def get_tasks_test():
     r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
-    # msg = r.get("tasks")
-    return r.keys("tasks:*"), 201
+    msg = r.hgetall('todos:Practice:tasks')
+    return jsonify(msg), 201
 
 # Creates a URI field instead of id so the client is seeing URIs instead of IDs
 def make_public_task(task):
