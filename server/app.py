@@ -1,13 +1,8 @@
 #!/Users/DanYoung/Documents/workspace/ToDoAgain/flask/bin/python
 from flask import Flask, jsonify, abort, make_response, request, url_for
-from flask_httpauth import HTTPBasicAuth, make_response
 import redis
 
 app = Flask(__name__)
-# TODO: Create a user database (Redis)
-# TODO: Setup Google SSO 
-# TODO: User Registration
-# auth = HTTPBasicAuth()
 
 redis_host = "localhost"
 redis_port = 6379
@@ -16,34 +11,17 @@ redis_password = ""
 @app.route("/redis_health")
 def hello_redis():
     """Example Hello Redis Program"""
-    
-    # step 3: create the Redis Connection object
     try:
-    
         # The decode_repsonses flag here directs the client to convert the responses from Redis into Python strings
         # using the default encoding utf-8.  This is client specific.
         r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
     
-        # step 4: Set the hello message in Redis 
         r.set("msg:hello", "Hello Redis!!!")
-
-        # step 5: Retrieve the hello message from Redis
         msg = r.get("msg:hello")
         return msg, 201        
-    
+
     except Exception as e:
         return e, 201
-
-# @auth.get_password
-# def get_password(username):
-#     if username == 'miguel':
-#         return 'python'
-#     return None
-
-# @auth.error_handler
-# def unauthorized():
-#     return make_response(jsonify({'error': 'Unauthorized access'}), 401)
-
 
 # TODO: Redefine the tasks model, and create reusable collections of tasks
 # TODO: Create a database of tasks / Implement Redis
@@ -61,7 +39,41 @@ tasks = [
         'done': False
     }
 ]
+@app.route("/set_test", methods=["POST"])
+def set_tasks_test():
+    print(request.json)
+    if not request.json or not 'title' in request.json:
+        abort(400)
+    else:
+        try:
+            # The decode_repsonses flag here directs the client to convert the responses from Redis into Python strings
+            # using the default encoding utf-8.  This is client specific.
+            r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
+        
+            # task = {
+            #     'id': tasks[-1]['id'] + 1,
+            #     'category': request.json['category'],
+            #     'title': request.json['title'],
+            #     'description': request.json.get('description', ""),
+            #     'done': False
+            # }
+            
+            # step 4: Set the hello message in Redis 
+            key = r.incr("tasks:task_id", 1)
+            r.set((key), str(request.json), nx=True)
 
+            # step 5: Retrieve the hello message from Redis
+            msg = r.get(key)
+            return msg, 201        
+        
+        except Exception as e:
+            return e, 201
+
+@app.route("/get_test")
+def get_tasks_test():
+    r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
+    # msg = r.get("tasks")
+    return r.keys("tasks:*"), 201
 
 # Creates a URI field instead of id so the client is seeing URIs instead of IDs
 def make_public_task(task):
