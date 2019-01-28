@@ -5,3 +5,6 @@
 docker-compose.yml
 .vscode
 redis.conf
+/config
+dump.rdb
+*__pycache__
