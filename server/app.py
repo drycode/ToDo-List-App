@@ -1,26 +1,51 @@
 #!/Users/DanYoung/Documents/workspace/ToDoAgain/flask/bin/python
-from flask import Flask, jsonify, abort, make_response, request, url_for, redirect
+from flask import Flask, jsonify, abort, make_response, request, session, url_for, redirect
 import json
 import redis
 from config.databaseconfig import *
 import server.auth as auth
+import os
+from functools import wraps
+import datetime
+import jwt
 
 app = Flask(__name__)
-app.secret_key = "super secret key"
-
+app.secret_key = os.urandom(24)
+print(app.config['SECRET_KEY'])
 
 r = redis.StrictRedis(host=rconf['REDIS_HOST'], port=rconf['REDIS_PORT'], password=rconf['REDIS_PASSWORD'], decode_responses=True)       
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if session['oauth_state']:
+            token = session['oauth_state']
+            print(token)
+        else:
+            redirect("/login")	
+        
+        return f(*args, **kwargs)	
+    return decorated
 
 @app.route("/login")
 def login():
     return auth.login()
 
+@app.route("/getsession")
+def getsession():
+    return auth.getsession()
+    
+@app.route("/protected")
+@token_required
+def protected():
+	return jsonify({'message':'This is only available for people with valid tokens'})
+
+# TODO: create user hash with valuable information
 @app.route("/callback/google", methods=["GET"])
 def callback():
     response = auth.callback()
     json_obj = response.json
     dan = auth.User(json_obj) 
-    print(dan)
     return response
 
 @app.route("/logout")
@@ -28,7 +53,7 @@ def logout():
     auth.logout()
 
 @app.route("/redis_health", methods=['GET'])
-# @auth.login_required
+# @auth.login_required()
 def hello_redis():
     """Example Hello Redis Program"""
     try:
@@ -42,6 +67,8 @@ def hello_redis():
         return e, 201
 
 # TODO: Redefine the tasks model, and create reusable collections of tasks
+# TODO: Refactor to use User['id'] as part of hash name
+# TODO: Include subtasks in Hash model
 # TODO: Add date time
 
 # @app.route("/todo/api/v1.0/authorize/google")

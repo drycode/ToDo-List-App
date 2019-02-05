@@ -1,12 +1,17 @@
 from flask import jsonify, redirect, request, session, url_for
 from flask_httpauth import HTTPBasicAuth, make_response
+from functools import wraps
+from server.app import app
 import redis
 from config.databaseconfig import *
 from requests_oauthlib import OAuth2Session
 import os
+
+
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
 
 r = redis.StrictRedis(host=rconf['REDIS_HOST'], port=rconf['REDIS_PORT'], password=rconf['REDIS_PASSWORD'], decode_responses=True)       
+
 
 client_id = google_creds['CLIENT_ID']
 client_secret = google_creds['CLIENT_SECRET']
@@ -29,10 +34,17 @@ def callback():
     # redirect_response = input(redirect_uri)
     token = google.fetch_token(token_url, client_secret=client_secret,
                                authorization_response=request.url)
-
     session['oauth_state'] = token
     
     return jsonify(google.get('https://www.googleapis.com/oauth2/v1/userinfo').json())
+
+def getsession():
+    if 'oauth_state' in session: 
+        return jsonify(session['oauth_state'])
+    return 'Not logged in'
+
+
+
 
 def logout():
     pass
@@ -53,16 +65,3 @@ class User():
 
 
 # TODO: Create a user database (Redis)
-# TODO: Setup Google SSO 
-# TODO: User Registration
-# auth = HTTPBasicAuth()
-
-# @auth.get_password
-# def get_password(username):
-#     r.set("users", username)
-
-# @auth.error_handler
-# def unauthorized():
-#     return make_response(jsonify({'error': 'Unauthorized access'}), 401)
-
-
