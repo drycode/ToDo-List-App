@@ -8,6 +8,7 @@ import os
 from functools import wraps
 import datetime
 import jwt
+import server.redis_methods as db
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -15,22 +16,19 @@ print(app.config['SECRET_KEY'])
 
 r = redis.StrictRedis(host=rconf['REDIS_HOST'], port=rconf['REDIS_PORT'], password=rconf['REDIS_PASSWORD'], decode_responses=True)       
 
+# Decorator function to ensure protected route handling
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if session['oauth_state']:
             token = session['oauth_state']
-            print(token)
         else:
             redirect("/login")	
         
         return f(*args, **kwargs)	
     return decorated
 
-@app.route("/login")
-def login():
-    return auth.login()
-
+# TEST FUNCTIONS: DELETE LATER AFTER TESTING IMPLEMENTATION
 @app.route("/getsession")
 def getsession():
     return auth.getsession()
@@ -40,17 +38,10 @@ def getsession():
 def protected():
 	return jsonify({'message':'This is only available for people with valid tokens'})
 
-# TODO: create user hash with valuable information
-@app.route("/callback/google", methods=["GET"])
-def callback():
-    response = auth.callback()
-    json_obj = response.json
-    dan = auth.User(json_obj) 
-    return response
-
-@app.route("/logout")
-def logout():
-    auth.logout()
+@app.route("/check_user")
+@token_required
+def show_user():
+    return str(active_user)
 
 @app.route("/redis_health", methods=['GET'])
 # @auth.login_required()
@@ -66,15 +57,44 @@ def hello_redis():
     except Exception as e:
         return e, 201
 
-# TODO: Redefine the tasks model, and create reusable collections of tasks
-# TODO: Refactor to use User['id'] as part of hash name
-# TODO: Include subtasks in Hash model
-# TODO: Add date time
 
-# @app.route("/todo/api/v1.0/authorize/google")
-# def create_user(oauth_url):
-#     redirect(oauth_url)
 
+
+@app.route("/login")
+def login():
+    return auth.login()
+
+@app.route("/callback/google", methods=["GET"])
+def callback():
+    """Returns active_user variable for future redis calls"""
+    response = auth.callback()
+    json_obj = response.json
+    json_obj['verified_email'] = str(json_obj['verified_email'])
+    global active_user 
+    active_user = db.ToDoUser(json_obj)
+    print(active_user)
+    return response
+
+@app.route("/logout")
+def logout():
+    auth.logout()
+
+
+
+# WARNING: eval() mehod in this route flow. Secure requests on frontend
+@app.route("/redis/tasks", methods=["POST"])
+def set_tasks():
+    if not request.json:
+        abort(400)
+    else:
+        try:
+            for task in request.json:
+                active_user.set_task(task)
+            return str(request.json), 201
+        except Exception as e:
+                return e, 201
+
+# DEPRECATED
 @app.route("/todo/api/v1.0/tasks", methods=["POST"])
 def set_tasks_test():
     print(request.json)
@@ -95,10 +115,10 @@ def set_tasks_test():
             return e, 201
 
 # TODO: Pagination argument
-# TODO: Filter options. Think about rows with which to filter
 # TODO: SEARCH
 
 # GET request for all task items in Database
+# TODO: Currently returns users and tasks
 @app.route("/todo/api/v1.0/tasks/all", methods=['GET'])
 # @auth.login_required
 def get_all_tasks():
