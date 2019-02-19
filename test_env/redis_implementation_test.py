@@ -37,16 +37,28 @@ task_objs = [
     }
 ]
 
+user_obj = {
+    "email": "danyoungmusic93@gmail.com",
+    "family_name": "Young",
+    "given_name": "Daniel",
+    "id": "115164965374312131232",
+    "link": "https://plus.google.com/115164965374312131232",
+    "locale": "en",
+    "name": "Daniel Young",
+    "picture": "https://lh3.googleusercontent.com/-f9bYxnccPbw/AAAAAAAAAAI/AAAAAAAAHz0/3a2v20L2HIo/photo.jpg",
+    "verified_email": 'true'
+}
 
 class ToDoUser():    
-    def __init__(self, userid, name):
-        self.userid = userid
-        self.name = name
-        self.mykey = "Todos:users:" + str(userid) + ":tasks:"
-
+    def __init__(self, user_obj):
+        self.userid = user_obj['id']
+        self.name = user_obj['given_name'] + " " + user_obj['family_name']
+        self.mykey = "Todos:users:" + str(self.userid) + ":tasks:"
+        r.hmset("Todos:users:" + str(self.userid), user_obj)
     """"All Create/Update functions will begin here and will continue through
     to the next explicit comment."""
     # Sets up all parts of the hash map
+
     def set_task(self, task_obj):
         """
         Establishes key value stores in redis for rapid querying of task_ids for specified
@@ -125,7 +137,7 @@ class ToDoUser():
         tasks = r.zrangebyscore(self.mykey + "due_sort_all_task_ids", start, end)
         for item in self._get_tasks(tasks):
             print(item)
-    
+
 
     """Class based helper functions will begin here and will continue through to the next
     explicit comment."""
@@ -142,6 +154,9 @@ class ToDoUser():
     def _get_tasks(self, tasks):
         return (r.hgetall(self.mykey + task) for task in tasks)
 
+
+
+
     """Dunder methods stored here."""
     def __repr__(self):
         tot_tasks = r.scard(self.my_task_ids)
@@ -149,9 +164,11 @@ class ToDoUser():
 
     # def __iter__(self):
 
+
 # TODO: implement real tests with unittest
+
 # Tests
-dan = ToDoUser(123, "Daniel Young")
+dan = ToDoUser(user_obj)
 for task_obj in task_objs:
     dan.set_task(task_obj) 
 print(dan)

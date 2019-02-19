@@ -12,7 +12,6 @@ import server.redis_methods as db
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-print(app.config['SECRET_KEY'])
 
 r = redis.StrictRedis(host=rconf['REDIS_HOST'], port=rconf['REDIS_PORT'], password=rconf['REDIS_PASSWORD'], decode_responses=True)       
 
@@ -44,7 +43,7 @@ def show_user():
     return str(active_user)
 
 @app.route("/redis_health", methods=['GET'])
-# @auth.login_required()
+@token_required
 def hello_redis():
     """Example Hello Redis Program"""
     try:
@@ -56,9 +55,6 @@ def hello_redis():
 
     except Exception as e:
         return e, 201
-
-
-
 
 @app.route("/login")
 def login():
@@ -81,21 +77,28 @@ def logout():
 
 
 
+# ROUTES
 # WARNING: eval() mehod in this route flow. Secure requests on frontend
+
+###################################################################################
 @app.route("/redis/tasks", methods=["POST"])
+# @token_required
 def set_tasks():
     if not request.json:
         abort(400)
     else:
         try:
             for task in request.json:
+                print(task)
                 active_user.set_task(task)
             return str(request.json), 201
         except Exception as e:
-                return e, 201
+            print("An exception was found")
+            return e, 201
 
 # DEPRECATED
 @app.route("/todo/api/v1.0/tasks", methods=["POST"])
+@token_required
 def set_tasks_test():
     print(request.json)
     if not request.json or not 'title' in request.json or request.json['done']:
@@ -114,14 +117,23 @@ def set_tasks_test():
         except Exception as e:
             return e, 201
 
-# TODO: Pagination argument
-# TODO: SEARCH
-
-# GET request for all task items in Database
-# TODO: Currently returns users and tasks
-@app.route("/todo/api/v1.0/tasks/all", methods=['GET'])
-# @auth.login_required
+###################################################################################
+@app.route("/redis/tasks", methods=['GET'])
+@token_required
 def get_all_tasks():
+    try:
+        tasks = [task for task in active_user.get_all_tasks()]
+        for task in tasks:
+            print(task)
+        return jsonify(tasks), 201
+
+    except Exception as e:
+        return e, 201
+
+# DEPRECATED
+@app.route("/todo/api/v1.0/tasks", methods=['GET'])
+@token_required
+def get_all_tasks_test():
     msg = {}
     categories = [cat for cat in r.scan_iter()]
     for hash_name in categories:
@@ -134,10 +146,27 @@ def get_all_tasks():
             pass
     return jsonify(msg), 201
 
+###################################################################################
 # GET request for all tasks in specific categories
+@app.route("/redis/tasks/<category>", methods=['GET'])
+@token_required
+def get_tasks_cat(category):
+    print(category)
+    # try:
+    tasks = [task for task in active_user.get_category_tasks(category)]
+    for task in tasks:
+        print(task)
+    print(tasks)
+    return jsonify(tasks), 201
+
+    # except Exception as e:
+    #     print("an exception has occurred")
+    #     return e, 201
+
+# DEPRECATED
 @app.route("/todo/api/v1.0/tasks", methods=['GET'])
-# @auth.login_required
-def get_tasks():
+@token_required
+def get_tasks_cat_test():
     print(request.json)
     msg = {}
     categories = request.json['category']
@@ -147,19 +176,20 @@ def get_tasks():
         msg.update(task)
     return jsonify(msg), 201
 
+###################################################################################
+
 # GET request for single task item in Database
 @app.route('/todo/api/v1.0/tasks/<category>/<title>', methods=['GET'])
-# @auth.login_required
+@token_required
 def get_task(category, title):
-    # print(category + title)
-    # cat = request.json['category']
-    # title = request.json['title']
     hash_name = f"todos:{category}:tasks"
     msg = r.hget(hash_name, title)
     return jsonify(msg), 201
 
+###################################################################################
+
 @app.route('/todo/api/v1.0/tasks/<category>/<title>/delete', methods=['DELETE'])
-# @auth.login_required
+@token_required
 def delete_task(category, title):
     hash_name = f"todos:{category}:tasks"
     if not r.hexists(hash_name, title):
@@ -171,10 +201,17 @@ def delete_task(category, title):
         msg = "Something went wrong"
     return msg, 201
 
+###################################################################################
+
 @app.errorhandler(404)
-# @auth.login_required
+@token_required
 def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+# TODO: Pagination argument
+# TODO: SEARCH
