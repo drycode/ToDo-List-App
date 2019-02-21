@@ -9,6 +9,7 @@ from functools import wraps
 import datetime
 import jwt
 import server.redis_methods as db
+from time import sleep
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -19,15 +20,15 @@ r = redis.StrictRedis(host=rconf['REDIS_HOST'], port=rconf['REDIS_PORT'], passwo
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if session['oauth_state']:
-            token = session['oauth_state']
+        if auth.session['oauth_state']:
+            token = auth.session['oauth_state']
         else:
             redirect("/login")	
         
         return f(*args, **kwargs)	
     return decorated
 
-# TEST FUNCTIONS: DELETE LATER AFTER TESTING IMPLEMENTATION
+# TEST FUNCTIONS
 @app.route("/getsession")
 def getsession():
     return auth.getsession()
@@ -60,6 +61,7 @@ def hello_redis():
 def login():
     return auth.login()
 
+
 @app.route("/callback/google", methods=["GET"])
 def callback():
     """Returns active_user variable for future redis calls"""
@@ -68,12 +70,15 @@ def callback():
     json_obj['verified_email'] = str(json_obj['verified_email'])
     global active_user 
     active_user = db.ToDoUser(json_obj)
-    print(active_user)
+    _redis_session_store(auth.session)
     return response
 
 @app.route("/logout")
 def logout():
     auth.logout()
+    return redirect('/login')
+
+    
 
 
 
@@ -82,7 +87,7 @@ def logout():
 
 ###################################################################################
 @app.route("/redis/tasks", methods=["POST"])
-# @token_required
+@token_required
 def set_tasks():
     if not request.json:
         abort(400)
@@ -188,9 +193,21 @@ def get_task(category, title):
 
 ###################################################################################
 
-@app.route('/todo/api/v1.0/tasks/<category>/<title>/delete', methods=['DELETE'])
+@app.route("/redis/tasks/<category>/<title>/delete", methods=['DELETE'])
 @token_required
 def delete_task(category, title):
+    print(category + title)
+    # try:
+    active_user.delete_tasks_by_category(category, active_user._blake2b_hash_title(title))
+    return redirect('/redis/tasks'), 201
+    # except:
+        # msg = {"msg":"Invalid deletion parameters. Please try again."}
+        # return jsonify(msg)
+    
+# DEPRECATED
+@app.route('/todo/api/v1.0/tasks/<category>/<title>/delete', methods=['DELETE'])
+@token_required
+def delete_task_test(category, title):
     hash_name = f"todos:{category}:tasks"
     if not r.hexists(hash_name, title):
         abort(404)
@@ -202,9 +219,22 @@ def delete_task(category, title):
     return msg, 201
 
 ###################################################################################
+# TODO: implement multi-delete
+@app.route('/redis/tasks', methods=['DELETE'])
+@token_required
+def delete_multiple_tasks():
+    active_user.delete_tasks_by_category(request.json['category'], request.json['task_ids'])
+    return get_all_tasks()
+
+###################################################################################
+def _redis_session_store(session):
+    auth.session['session_id'] = active_user.get_user_id()
+    hash_key = "session_data:{}:session_info".format(auth.session['session_id'])
+    r.hset(hash_key, "access_token", auth.session['oauth_state']['access_token'])
+    r.hset(hash_key, "id_token", auth.session['oauth_state']['id_token'])
+    r.expire(hash_key, int(auth.session['oauth_state']['expires_in']))
 
 @app.errorhandler(404)
-@token_required
 def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
 

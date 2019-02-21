@@ -108,10 +108,24 @@ class ToDoUser():
         tasks = r.zrangebyscore(self.mykey + "due_sort_all_task_ids", start, end)
         for item in self._get_tasks(tasks):
             yield item
+
+    def delete_tasks_by_category(self, category, task_ids):
+        """
+        Must give the category along with a potential list of task_ids
+        """
+        print(task_ids)
+        print(category)
+        keys = [self.mykey + str(task_ids) for key in task_ids]
+        for key in keys: r.delete(key)
+        for task in task_ids: 
+            task = self._blake2b_hash_title(task)
+            r.srem(self.my_task_ids, task)
+            r.srem(self.mykey + category + "_task_ids", task)
+            r.zrem(self.mykey + "due_sort_all_task_ids", task)
         
-    # TODO: de-hash task_id to find title
-    def find_task(self, title):
-        pass
+
+    def get_user_id(self):
+        return self.userid
 
 
     """Class based helper functions will begin here and will continue through to the next

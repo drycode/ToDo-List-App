@@ -6,6 +6,7 @@ import redis
 from config.databaseconfig import *
 from requests_oauthlib import OAuth2Session
 import os
+import uuid
 
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
@@ -35,7 +36,6 @@ def callback():
     token = google.fetch_token(token_url, client_secret=client_secret,
                                authorization_response=request.url)
     session['oauth_state'] = token
-    
     return jsonify(google.get('https://www.googleapis.com/oauth2/v1/userinfo').json())
 
 def getsession():
@@ -43,11 +43,9 @@ def getsession():
         return jsonify(session['oauth_state'])
     return 'Not logged in'
 
-
-
-# TODO: Implement Logout
 def logout():
-    pass
+    session['oauth_state'] = None
+    return jsonify({"Logout Message": "You have successfully logged out. You will now be redirected."})
 
 # Possibly Junk
 # class User():
