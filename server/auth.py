@@ -1,3 +1,4 @@
+# TODO: organize import statments
 from flask import jsonify, redirect, request, session, url_for
 from flask_httpauth import HTTPBasicAuth, make_response
 from functools import wraps
@@ -11,6 +12,9 @@ import uuid
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
 
+# TODO: create redis.py in /server and initialize redis there
+# TODO: look into "singleton pattern" for caching modules
+# TODO: PERSISTANCE!!!!
 r = redis.StrictRedis(host=rconf['REDIS_HOST'], port=rconf['REDIS_PORT'], password=rconf['REDIS_PASSWORD'], decode_responses=True)       
 
 
