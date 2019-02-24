@@ -69,8 +69,6 @@ Be sure to setup  a virtual environment to manage dependencies.
 
 ## Development setup
 
-Describe how to install all development dependencies and how to run an automated test-suite of some kind. Potentially do this for multiple platforms.
-
 ```sh
 ~ source bin/activate
 ~ pip install -r requirements.txt
