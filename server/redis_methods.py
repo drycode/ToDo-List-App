@@ -165,8 +165,6 @@ class ToDoUser():
     # def __iter__(self):
 
 
-# TODO: implement real tests with unittest
-
 # Tests
 # dan = ToDoUser(user_obj)
 # for task_obj in task_objs:

@@ -14,7 +14,6 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
 
 # TODO: create redis.py in /server and initialize redis there
 # TODO: look into "singleton pattern" for caching modules
-# TODO: PERSISTANCE!!!!
 r = redis.StrictRedis(host=rconf['REDIS_HOST'], port=rconf['REDIS_PORT'], password=rconf['REDIS_PASSWORD'], decode_responses=True)       
 
 

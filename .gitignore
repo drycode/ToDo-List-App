@@ -8,3 +8,4 @@ redis.conf
 /config
 dump.rdb
 *__pycache__
+test_env/example_data.py
