@@ -1,21 +1,18 @@
-# TODO: organize import statments
-from flask import jsonify, redirect, request, session, url_for
-from flask_httpauth import HTTPBasicAuth, make_response
-from functools import wraps
-from server.app import app
-import redis
-from config.databaseconfig import *
-from requests_oauthlib import OAuth2Session
 import os
 import uuid
+
+from flask import jsonify, redirect, request, session, url_for
+from flask_httpauth import HTTPBasicAuth, make_response
+from requests_oauthlib import OAuth2Session
+
+from server.app import app
+from config.databaseconfig import *
+from server.redis_local import r
 
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
 
-# TODO: create redis.py in /server and initialize redis there
 # TODO: look into "singleton pattern" for caching modules
-r = redis.StrictRedis(host=rconf['REDIS_HOST'], port=rconf['REDIS_PORT'], password=rconf['REDIS_PASSWORD'], decode_responses=True)       
-
 
 client_id = google_creds['CLIENT_ID']
 client_secret = google_creds['CLIENT_SECRET']

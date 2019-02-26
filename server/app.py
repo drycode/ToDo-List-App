@@ -1,20 +1,21 @@
 #!/Users/DanYoung/Documents/workspace/ToDoAgain/flask/bin/python
-from flask import Flask, jsonify, abort, make_response, request, session, url_for, redirect
+
+import datetime
+from functools import wraps
 import json
-import redis
+import os
+
+
+
+from flask import Flask, jsonify, abort, make_response, request, session, url_for, redirect
+
 from config.databaseconfig import *
 import server.auth as auth
-import os
-from functools import wraps
-import datetime
-import jwt
+from server.redis_local import r
 import server.redis_methods as db
-from time import sleep
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-
-r = redis.StrictRedis(host=rconf['REDIS_HOST'], port=rconf['REDIS_PORT'], password=rconf['REDIS_PASSWORD'], decode_responses=True)       
 
 # Decorator function to ensure protected route handling
 def token_required(f):

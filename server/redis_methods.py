@@ -1,15 +1,7 @@
-import redis
 from datetime import datetime
 from hashlib import blake2b
 
-rconf = {
-    'REDIS_HOST' : "localhost",
-    'REDIS_PORT' : 6379,
-    'REDIS_PASSWORD' : ""
-}
-
-r = redis.StrictRedis(host=rconf['REDIS_HOST'], port=rconf['REDIS_PORT'], password=rconf['REDIS_PASSWORD'], decode_responses=True)       
-
+from server.redis_local import r
 
 # TODO: Include subtasks in Hash model
 class ToDoUser():    
