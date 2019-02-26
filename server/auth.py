@@ -3,12 +3,22 @@ import uuid
 
 from flask import jsonify, redirect, request, session, url_for
 from flask_httpauth import HTTPBasicAuth, make_response
+from flask_session import Session
 from requests_oauthlib import OAuth2Session
 
 from server.app import app
 from config.databaseconfig import *
 from server.redis_local import r
 
+# Session storage in Redis at 127.0.0.1:6389
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_REDIS'] = r.from_url('127.0.0.1:6379')
+
+# TODO: Set the cookie TTL here. By default Flask, issues cookies which expire in 
+# a month. May want to consider a shorter timeline
+
+sess = Session()
+sess.init_app(app)
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
 
@@ -36,7 +46,10 @@ def callback():
     token = google.fetch_token(token_url, client_secret=client_secret,
                                authorization_response=request.url)
     session['oauth_state'] = token
-    return jsonify(google.get('https://www.googleapis.com/oauth2/v1/userinfo').json())
+    user_info = jsonify(google.get('https://www.googleapis.com/oauth2/v1/userinfo').json())
+    session['user_id'] = user_info.json
+    print(session['user_id'])
+    return user_info
 
 def getsession():
     if 'oauth_state' in session: 
@@ -45,6 +58,7 @@ def getsession():
 
 def logout():
     session['oauth_state'] = None
+    session.clear()
     return jsonify({"Logout Message": "You have successfully logged out. You will now be redirected."})
 
 # Possibly Junk

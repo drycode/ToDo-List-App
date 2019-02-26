@@ -5,8 +5,6 @@ from functools import wraps
 import json
 import os
 
-
-
 from flask import Flask, jsonify, abort, make_response, request, session, url_for, redirect
 
 from config.databaseconfig import *
@@ -15,16 +13,28 @@ from server.redis_local import r
 import server.redis_methods as db
 
 app = Flask(__name__)
+
 app.secret_key = os.urandom(24)
+
+active_user = False
+
+def _set_active_user(active_user): 
+    obj = session.get('user_id', None)
+    if obj:
+        active_user = db.ToDoUser(obj)
+    else:
+        active_user = False
+    print(active_user)
 
 # Decorator function to ensure protected route handling
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if auth.session['oauth_state']:
-            token = auth.session['oauth_state']
-        else:
-            redirect("/login")	
+        _set_active_user(active_user)
+        # user_session = session.get('user_id', None)
+        if not session.get('user_id', False):
+            print("Not logged in")
+            return redirect("/login")	
         
         return f(*args, **kwargs)	
     return decorated
@@ -69,9 +79,7 @@ def callback():
     response = auth.callback()
     json_obj = response.json
     json_obj['verified_email'] = str(json_obj['verified_email'])
-    global active_user 
-    active_user = db.ToDoUser(json_obj)
-    _redis_session_store(auth.session)
+    # _redis_session_store(auth.session)
     return response
 
 @app.route("/logout")
@@ -228,12 +236,14 @@ def delete_multiple_tasks():
     return get_all_tasks()
 
 ###################################################################################
+# Possibly Deprecated.....
 def _redis_session_store(session):
     auth.session['session_id'] = active_user.get_user_id()
     hash_key = "session_data:{}:session_info".format(auth.session['session_id'])
     r.hset(hash_key, "access_token", auth.session['oauth_state']['access_token'])
     r.hset(hash_key, "id_token", auth.session['oauth_state']['id_token'])
     r.expire(hash_key, int(auth.session['oauth_state']['expires_in']))
+
 
 @app.errorhandler(404)
 def not_found(error):
