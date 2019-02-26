@@ -1,6 +1,8 @@
-import unittest
-from server.redis_methods import *
 from datetime import datetime
+import unittest
+
+from server.redis_methods import *
+
 
 
 # TODO: read about mocking redis, integration testing
