@@ -8,6 +8,7 @@ Flask-And-Redis==0.7
 Flask-Cors==3.0.7
 Flask-HTTPAuth==3.2.4
 Flask-RESTful==0.3.7
+Flask-Session==0.3.1
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10
