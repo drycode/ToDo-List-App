@@ -8,17 +8,13 @@ from requests_oauthlib import OAuth2Session
 
 from server.app import app
 from config.databaseconfig import *
-from server.redis_local import r
+from server.redis_local import r, redis
 
 # Session storage in Redis at 127.0.0.1:6389
-app.config['SESSION_TYPE'] = 'redis'
-app.config['SESSION_REDIS'] = r.from_url('127.0.0.1:6379')
+
 
 # TODO: Set the cookie TTL here. By default Flask, issues cookies which expire in 
 # a month. May want to consider a shorter timeline
-
-sess = Session()
-sess.init_app(app)
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
 

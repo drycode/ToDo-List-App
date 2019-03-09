@@ -28,6 +28,7 @@ class ToDoUser():
         #TODO: use get() method from defaultdict
         # https://www.programiz.com/python-programming/methods/dictionary/get
         # Converts datetime object to integer value for sorting
+        # task_obj['date_created'] = self._convert_datetime(task_obj.get('date_created', datetime.utcnow()))
         if not task_obj['date_created']:
             task_obj['date_created'] = self._convert_datetime(datetime.utcnow())
         else:

@@ -6,33 +6,39 @@ import json
 import os
 
 from flask import Flask, jsonify, abort, make_response, request, session, url_for, redirect
+from flask_session import Session
+
 
 from config.databaseconfig import *
 import server.auth as auth
 from server.redis_local import r
 import server.redis_methods as db
+from server.redis_local import r, redis
 
 app = Flask(__name__)
 
 app.secret_key = os.urandom(24)
 
-active_user = False
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_REDIS'] = redis.from_url('127.0.0.1:6379')
 
-def _set_active_user(active_user): 
-    obj = session.get('user_id', None)
+sess = Session()
+sess.init_app(app)
+
+def _get_active_user():
+    obj = auth.session.get('user_id', None)
     if obj:
         active_user = db.ToDoUser(obj)
     else:
         active_user = False
     print(active_user)
+    return active_user
 
 # Decorator function to ensure protected route handling
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        _set_active_user(active_user)
-        # user_session = session.get('user_id', None)
-        if not session.get('user_id', False):
+        if not auth.session.get('user_id', False):
             print("Not logged in")
             return redirect("/login")	
         
@@ -52,7 +58,7 @@ def protected():
 @app.route("/check_user")
 @token_required
 def show_user():
-    return str(active_user)
+    return str(_get_active_user())
 
 @app.route("/redis_health", methods=['GET'])
 @token_required
@@ -87,10 +93,6 @@ def logout():
     auth.logout()
     return redirect('/login')
 
-    
-
-
-
 # ROUTES
 # WARNING: eval() mehod in this route flow. Secure requests on frontend
 
@@ -104,7 +106,7 @@ def set_tasks():
         try:
             for task in request.json:
                 print(task)
-                active_user.set_task(task)
+                _get_active_user().set_task(task)
             return str(request.json), 201
         except Exception as e:
             print("An exception was found")
@@ -136,7 +138,7 @@ def set_tasks_test():
 @token_required
 def get_all_tasks():
     try:
-        tasks = [task for task in active_user.get_all_tasks()]
+        tasks = [task for task in _get_active_user().get_all_tasks()]
         for task in tasks:
             print(task)
         return jsonify(tasks), 201
@@ -167,7 +169,7 @@ def get_all_tasks_test():
 def get_tasks_cat(category):
     print(category)
     # try:
-    tasks = [task for task in active_user.get_category_tasks(category)]
+    tasks = [task for task in _get_active_user().get_category_tasks(category)]
     for task in tasks:
         print(task)
     print(tasks)
@@ -207,7 +209,7 @@ def get_task(category, title):
 def delete_task(category, title):
     print(category + title)
     # try:
-    active_user.delete_tasks_by_category(category, active_user._blake2b_hash_title(title))
+    _get_active_user().delete_tasks_by_category(category, _get_active_user()._blake2b_hash_title(title))
     return redirect('/redis/tasks'), 201
     # except:
         # msg = {"msg":"Invalid deletion parameters. Please try again."}
@@ -232,13 +234,13 @@ def delete_task_test(category, title):
 @app.route('/redis/tasks', methods=['DELETE'])
 @token_required
 def delete_multiple_tasks():
-    active_user.delete_tasks_by_category(request.json['category'], request.json['task_ids'])
+    _get_active_user().delete_tasks_by_category(request.json['category'], request.json['task_ids'])
     return get_all_tasks()
 
 ###################################################################################
 # Possibly Deprecated.....
 def _redis_session_store(session):
-    auth.session['session_id'] = active_user.get_user_id()
+    auth.session['session_id'] = _get_active_user().get_user_id()
     hash_key = "session_data:{}:session_info".format(auth.session['session_id'])
     r.hset(hash_key, "access_token", auth.session['oauth_state']['access_token'])
     r.hset(hash_key, "id_token", auth.session['oauth_state']['id_token'])
