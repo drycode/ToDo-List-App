@@ -3,12 +3,10 @@ import uuid
 
 from flask import jsonify, redirect, request, session, url_for
 from flask_httpauth import HTTPBasicAuth, make_response
-from flask_session import Session
 from requests_oauthlib import OAuth2Session
 
 from server.app import app
 from config.databaseconfig import *
-from server.redis_local import r, redis
 
 # Session storage in Redis at 127.0.0.1:6389
 
