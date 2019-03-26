@@ -1,67 +1,79 @@
-#!/Users/DanYoung/Documents/workspace/ToDoAgain/flask/bin/python
+#!/Users/DanYoung/Envs/flask/bin/python
 
 import datetime
 from functools import wraps
 import json
 import os
 
-from flask import Flask, jsonify, abort, make_response, request, session, url_for, redirect
+from flask import (
+    Flask,
+    jsonify,
+    abort,
+    make_response,
+    request,
+    session,
+    url_for,
+    redirect,
+)
 from flask_session import Session
 
-
-from config.databaseconfig import *
-import server.auth as auth
-from server.redis_local import r
-import server.redis_methods as db
-from server.redis_local import r, redis
+import auth
+from redis_local import r, redis
+from redis_methods import ToDoUser
 
 app = Flask(__name__)
 
 app.secret_key = os.urandom(24)
 
-app.config['SESSION_TYPE'] = 'redis'
-app.config['SESSION_REDIS'] = redis.from_url('127.0.0.1:6379')
+app.config["SESSION_TYPE"] = "redis"
+app.config["SESSION_REDIS"] = redis.from_url("127.0.0.1:6379")
 
 sess = Session()
 sess.init_app(app)
 
+
 def _get_active_user():
-    obj = auth.session.get('user_id', None)
+    obj = auth.session.get("user_id", None)
     if obj:
-        active_user = db.ToDoUser(obj)
+        active_user = ToDoUser(obj)
     else:
         active_user = False
     print(active_user)
     return active_user
 
+
 # Decorator function to ensure protected route handling
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if not auth.session.get('user_id', False):
+        if not auth.session.get("user_id", False):
             print("Not logged in")
-            return redirect("/login")	
-        
-        return f(*args, **kwargs)	
+            return redirect("/login")
+
+        return f(*args, **kwargs)
+
     return decorated
+
 
 # TEST FUNCTIONS
 @app.route("/getsession")
 def getsession():
     return auth.getsession()
-    
+
+
 @app.route("/protected")
 @token_required
 def protected():
-	return jsonify({'message':'This is only available for people with valid tokens'})
+    return jsonify({"message": "This is only available for people with valid tokens"})
+
 
 @app.route("/check_user")
 @token_required
 def show_user():
     return str(_get_active_user())
 
-@app.route("/redis_health", methods=['GET'])
-@token_required
+
+@app.route("/redis_health", methods=["GET"])
 def hello_redis():
     """Example Hello Redis Program"""
     try:
@@ -69,10 +81,11 @@ def hello_redis():
         # using the default encoding utf-8.  This is client specific.
         r.set("msg:hello", "Hello Redis!!!")
         msg = r.get("msg:hello")
-        return msg, 201        
+        return msg, 201
 
     except Exception as e:
         return e, 201
+
 
 @app.route("/login")
 def login():
@@ -84,16 +97,18 @@ def callback():
     """Returns active_user variable for future redis calls"""
     response = auth.callback()
     json_obj = response.json
-    json_obj['verified_email'] = str(json_obj['verified_email'])
+    json_obj["verified_email"] = str(json_obj["verified_email"])
     return response
+
 
 @app.route("/logout")
 def logout():
     auth.logout()
-    return redirect('/login')
+    return redirect("/login")
+
 
 # ROUTES
-# WARNING: eval() mehod in this route flow. Secure requests on frontend
+# WARNING: eval() method in this route flow. Secure requests on frontend
 
 ###################################################################################
 @app.route("/redis/tasks", methods=["POST"])
@@ -111,9 +126,8 @@ def set_tasks():
             print("An exception was found")
             return e, 201
 
-
 ###################################################################################
-@app.route("/redis/tasks", methods=['GET'])
+@app.route("/redis/tasks", methods=["GET"])
 @token_required
 def get_all_tasks():
     try:
@@ -128,7 +142,7 @@ def get_all_tasks():
 
 ###################################################################################
 # GET request for all tasks in specific categories
-@app.route("/redis/tasks/<category>", methods=['GET'])
+@app.route("/redis/tasks/<category>", methods=["GET"])
 @token_required
 def get_tasks_cat(category):
     print(category)
@@ -144,47 +158,52 @@ def get_tasks_cat(category):
     #     return e, 201
 
 
+
 ###################################################################################
 
 # GET request for single task item in Database
-@app.route('/todo/api/v1.0/tasks/<category>/<title>', methods=['GET'])
+@app.route("/todo/api/v1.0/tasks/<category>/<title>", methods=["GET"])
 @token_required
 def get_task(category, title):
     hash_name = f"todos:{category}:tasks"
     msg = r.hget(hash_name, title)
     return jsonify(msg), 201
 
+
 ###################################################################################
 
-@app.route("/redis/tasks/<category>/<title>/delete", methods=['DELETE'])
+# TODO: test in postman
+@app.route("/redis/tasks/<category>/<title>/delete", methods=["DELETE"])
 @token_required
 def delete_task(category, title):
     print(category + title)
     # try:
-    _get_active_user().delete_tasks_by_category(category, _get_active_user()._blake2b_hash_title(title))
-    return redirect('/redis/tasks'), 201
-    # except:
-        # msg = {"msg":"Invalid deletion parameters. Please try again."}
-        # return jsonify(msg)
-    
+    _get_active_user().delete_tasks_by_category(
+        category, _get_active_user()._blake2b_hash_title(title)
+    )
+    return redirect("/redis/tasks"), 201
+
 
 ###################################################################################
 # TODO: implement multi-delete
-@app.route('/redis/tasks', methods=['DELETE'])
+@app.route("/redis/tasks", methods=["DELETE"])
 @token_required
 def delete_multiple_tasks():
-    _get_active_user().delete_tasks_by_category(request.json['category'], request.json['task_ids'])
+    _get_active_user().delete_tasks_by_category(
+        request.json["category"], request.json["task_ids"]
+    )
     return get_all_tasks()
+
 
 ###################################################################################
 
 @app.errorhandler(404)
 def not_found(error):
-    return make_response(jsonify({'error': 'Not found'}), 404)
+    return make_response(jsonify({"error": "Not found"}), 404)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True)
-
 
 
 # TODO: Pagination argument
