@@ -68,18 +68,3 @@ def logout():
             "Logout Message": "You have successfully logged out. You will now be redirected."
         }
     )
-
-
-# Possibly Junk
-# class User():
-#     def __init__(self, json_data):
-#         self.email = json_data['email']
-
-#     def create_user(self):
-#         hash_name = "users"
-#         if r.hget(hash_name, self.user_id):
-#             return
-#         r.hset(hash_name, self.user_id, str(dict(self.social_id, self.nickname, self.email)))
-
-#     def __str__(self):
-#         return self.email

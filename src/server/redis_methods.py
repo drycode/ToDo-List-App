@@ -166,15 +166,3 @@ class ToDoUser:
         else:
             return "User(user_id: %r, name: %r, tasks: 0)" % (self.userid, self.name)
 
-    # def __iter__(self):
-
-
-# Tests
-# dan = ToDoUser(user_obj)
-# for task_obj in task_objs:
-#     dan.set_task(task_obj)
-# print(dan)
-# dan.get_all_tasks()
-# dan.get_date_range(datetime(2019, 2, 9, 22, 24, 11,346910), datetime(2019, 2, 9, 22, 24, 14,346913))
-# dan.get_category_tasks("Practice")
-# convert_datetime()
