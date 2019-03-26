@@ -1,6 +1,5 @@
 import redis
 
-from app import *
 from config.databaseconfig import rconf
 
 r = redis.StrictRedis(

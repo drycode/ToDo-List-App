@@ -17,12 +17,9 @@ from flask import (
 )
 from flask_session import Session
 
-
-from config.databaseconfig import *
-import auth as auth
-from redis_local import r
-import redis_methods as db
+import auth
 from redis_local import r, redis
+from redis_methods import ToDoUser
 
 app = Flask(__name__)
 
@@ -38,7 +35,7 @@ sess.init_app(app)
 def _get_active_user():
     obj = auth.session.get("user_id", None)
     if obj:
-        active_user = db.ToDoUser(obj)
+        active_user = ToDoUser(obj)
     else:
         active_user = False
     print(active_user)
@@ -77,7 +74,6 @@ def show_user():
 
 
 @app.route("/redis_health", methods=["GET"])
-@token_required
 def hello_redis():
     """Example Hello Redis Program"""
     try:
