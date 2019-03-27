@@ -16,6 +16,8 @@ class ToDoUser:
     to the next explicit comment."""
     # Sets up all parts of the hash map
 
+    # TODO: Refactor to put set methods into helper functions
+    # TODO: Redis transactions?...
     def set_task(self, task_obj):
         """
         Establishes key value stores in redis for rapid querying of task_ids for specified
@@ -24,36 +26,10 @@ class ToDoUser:
         Task_ids are used in subsequent queries for accessing hash map of specific task
         field data, 
         """
-        task_id = self._blake2b_hash_title(task_obj["title"])
+        task_id, task_obj, task_hash_key, due_date = self._initialize_redis_task(task_obj)
+        self._initialize_redis_hashmap(task_hash_key, task_obj)
 
-        # TODO: use get() method from defaultdict
-        # https://www.programiz.com/python-programming/methods/dictionary/get
-        # Converts datetime object to integer value for sorting
-        # task_obj['date_created'] = self._convert_datetime(task_obj.get('date_created', datetime.utcnow()))
-        if not task_obj["date_created"]:
-            task_obj["date_created"] = self._convert_datetime(datetime.utcnow())
-        else:
-            task_obj["date_created"] = self._convert_datetime(
-                eval(task_obj["date_created"])
-            )
-
-        try:
-            task_obj["due_date"] = self._convert_datetime(eval(task_obj["due_date"]))
-            print(task_obj["due_date"])
-            due_date = True
-        except AttributeError:
-            task_obj["due_date"] = str(None)
-            due_date = False
-
-        task_hash_key = self.mykey + str(task_id)
-
-        # Creates a hash_map of field value pairs for a particular user's task stored
-        # At location self.mykey:<task_id>.
-        # This hash will be queried for task data specific to a specific task_id
-        try:
-            r.hmset(task_hash_key, task_obj)
-        except:
-            print("Error in hash_map processing of task {task_obj}")
+        
 
         # Stores all of the user's task_id keys
         # At location self.mykey:all_task_ids
@@ -81,6 +57,11 @@ class ToDoUser:
         tasks = r.smembers(self.my_task_ids)
         for item in self._get_tasks(tasks):
             yield item
+        
+    def get_one_task(self, title):
+        task_id = self._blake2b_hash_title(title)
+        task = r.hgetall(self.mykey + task_id)
+        return task
 
     # Queries tasks by category
     def get_category_tasks(self, category):
@@ -121,11 +102,50 @@ class ToDoUser:
             r.srem(self.mykey + category + "_task_ids", task)
             r.zrem(self.mykey + "due_sort_all_task_ids", task)
 
+    def delete_one_task(self, title):
+        task_id = self._blake2b_hash_title(title)
+        category = r.hget(self.mykey + task_id, "category")
+        self.delete_tasks_by_category(category, task_id)
+
     def get_user_id(self):
         return self.userid
 
     """Class based helper functions will begin here and will continue through to the next
     explicit comment."""
+    def _initialize_redis_task(self, task_obj):
+        task_id = self._blake2b_hash_title(task_obj["title"])
+
+        # TODO: use get() method from defaultdict
+        # https://www.programiz.com/python-programming/methods/dictionary/get
+        # Converts datetime object to integer value for sorting
+        # task_obj['date_created'] = self._convert_datetime(task_obj.get('date_created', datetime.utcnow()))
+        if not task_obj["date_created"]:
+            task_obj["date_created"] = self._convert_datetime(datetime.utcnow())
+        else:
+            task_obj["date_created"] = self._convert_datetime(
+                eval(task_obj["date_created"])
+            )
+
+        try:
+            task_obj["due_date"] = self._convert_datetime(eval(task_obj["due_date"]))
+            print(task_obj["due_date"])
+            due_date = True
+        except AttributeError:
+            task_obj["due_date"] = str(None)
+            due_date = False
+
+        task_hash_key = self.mykey + str(task_id)
+        return task_id, task_obj, task_hash_key, due_date
+
+    def _initialize_redis_hashmap(self, task_hash_key, task_obj):
+        # Creates a hash_map of field value pairs for a particular user's task stored
+        # At location self.mykey:<task_id>.
+        # This hash will be queried for task data specific to a specific task_id
+        try:
+            r.hmset(task_hash_key, task_obj)
+        except:
+            print("Error in hash_map processing of task {task_obj}")
+
     # Creates integer value of datetime
     def _convert_datetime(self, date):
         date = date.strftime("%Y%m%d%H%M%S")
@@ -165,4 +185,11 @@ class ToDoUser:
             )
         else:
             return "User(user_id: %r, name: %r, tasks: 0)" % (self.userid, self.name)
+
+    def set_sub_tasks(self, task_id, subtasks=[]):
+        r.rpush(self.mykey + task_id, subtasks)
+        
+    def get_sub_tasks(self, task_id):
+        subtask_list = r.lrange(self.mykey + task_id, 0, r.llen(self.mykey + task_id))
+        return subtask_list
 

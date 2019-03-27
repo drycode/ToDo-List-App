@@ -160,33 +160,27 @@ def get_tasks_cat(category):
 
 
 ###################################################################################
-
-# GET request for single task item in Database
-@app.route("/todo/api/v1.0/tasks/<category>/<title>", methods=["GET"])
+@app.route("/redis/tasks/<category>/<title>", methods=["GET"])
 @token_required
 def get_task(category, title):
-    hash_name = f"todos:{category}:tasks"
-    msg = r.hget(hash_name, title)
-    return jsonify(msg), 201
+    print(category + " " + title)
+    task = _get_active_user().get_one_task(title)
+    return jsonify(task), 201
 
 
 ###################################################################################
 
 # TODO: test in postman
-@app.route("/redis/tasks/<category>/<title>/delete", methods=["DELETE"])
+@app.route("/redis/tasks/delete", methods=["DELETE"])
 @token_required
-def delete_task(category, title):
-    print(category + title)
-    # try:
-    _get_active_user().delete_tasks_by_category(
-        category, _get_active_user()._blake2b_hash_title(title)
-    )
+def delete_task(title):
+    _get_active_user().delete_one_task(request.json["title"])
     return redirect("/redis/tasks"), 201
 
 
 ###################################################################################
-# TODO: implement multi-delete
-@app.route("/redis/tasks", methods=["DELETE"])
+# TODO: test in postman
+@app.route("/redis/tasks/delete", methods=["DELETE"])
 @token_required
 def delete_multiple_tasks():
     _get_active_user().delete_tasks_by_category(
@@ -208,3 +202,7 @@ if __name__ == "__main__":
 
 # TODO: Pagination argument
 # TODO: SEARCH
+# TODO: Currently, you may or may not be able to have multiple 
+    # tasks with the same ID in different categories. Going to cause
+    # bugs in deletion 
+# TODO: Memoize _get_active_user() ???
