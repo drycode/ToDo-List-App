@@ -5,6 +5,9 @@ from redis_local import r
 
 # TODO: Include subtasks in Hash model
 class ToDoUser:
+    """
+    All ToDo list tasks are centralized in this ToDoUser class.
+    """
     def __init__(self, user_obj):
         self.userid = user_obj["id"]
         self.name = user_obj["name"]
@@ -12,24 +15,21 @@ class ToDoUser:
         self.my_task_ids = self.mykey + "all_task_ids"
         r.hmset("Todos:users:" + str(self.userid), user_obj)
 
-    """"All Create/Update functions will begin here and will continue through
-    to the next explicit comment."""
+    # All Create/Update functions will begin here and will continue through
+    # to the next explicit comment.
+    
     # Sets up all parts of the hash map
-
     # TODO: Refactor to put set methods into helper functions
     # TODO: Redis transactions?...
     def set_task(self, task_obj):
         """
         Establishes key value stores in redis for rapid querying of task_ids for specified
-        queries. 
-
+        queries.
         Task_ids are used in subsequent queries for accessing hash map of specific task
-        field data, 
+        field data,
         """
         task_id, task_obj, task_hash_key, due_date = self._initialize_redis_task(task_obj)
         self._initialize_redis_hashmap(task_hash_key, task_obj)
-
-        
 
         # Stores all of the user's task_id keys
         # At location self.mykey:all_task_ids
@@ -57,8 +57,12 @@ class ToDoUser:
         tasks = r.smembers(self.my_task_ids)
         for item in self._get_tasks(tasks):
             yield item
-        
+
     def get_one_task(self, title):
+        """
+        Returns a single task object from a given task title.
+        Titles must be unique, regardless of categories.
+        """
         task_id = self._blake2b_hash_title(title)
         task = r.hgetall(self.mykey + task_id)
         return task
@@ -77,8 +81,8 @@ class ToDoUser:
     # Queries specific date range
     def get_date_range(self, start, end):
         """
-        Returns a generator object withthe hash results of task_id keys with due dates 
-        between ``start`` and ``end``. 
+        Returns a generator object with the hash results of task_id keys with due dates
+        between ``start`` and ``end``.
 
         ``start`` and ``end`` should be passed as datetime objects in python.
         """
@@ -103,6 +107,9 @@ class ToDoUser:
             r.zrem(self.mykey + "due_sort_all_task_ids", task)
 
     def delete_one_task(self, title):
+        """
+        Deletes a single task given a specific task title.
+        """
         task_id = self._blake2b_hash_title(title)
         category = r.hget(self.mykey + task_id, "category")
         self.delete_tasks_by_category(category, task_id)
@@ -118,7 +125,9 @@ class ToDoUser:
         # TODO: use get() method from defaultdict
         # https://www.programiz.com/python-programming/methods/dictionary/get
         # Converts datetime object to integer value for sorting
-        # task_obj['date_created'] = self._convert_datetime(task_obj.get('date_created', datetime.utcnow()))
+        # task_obj['date_created'] = self._convert_datetime(
+        # task_obj.get('date_created', datetime.utcnow())
+        # )
         if not task_obj["date_created"]:
             task_obj["date_created"] = self._convert_datetime(datetime.utcnow())
         else:
@@ -188,8 +197,7 @@ class ToDoUser:
 
     def set_sub_tasks(self, task_id, subtasks=[]):
         r.rpush(self.mykey + task_id, subtasks)
-        
+
     def get_sub_tasks(self, task_id):
         subtask_list = r.lrange(self.mykey + task_id, 0, r.llen(self.mykey + task_id))
         return subtask_list
-
