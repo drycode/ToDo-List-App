@@ -7,5 +7,4 @@ r = redis.StrictRedis(
     port=rconf["REDIS_PORT"],
     password=rconf["REDIS_PASSWORD"],
     decode_responses=True,
-)
-
+    )

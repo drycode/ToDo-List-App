@@ -17,7 +17,7 @@ from flask import (
 )
 from flask_session import Session
 
-import auth
+# from auth import 
 from redis_local import r, redis
 from redis_methods import ToDoUser
 
