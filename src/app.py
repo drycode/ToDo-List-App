@@ -1,5 +1,4 @@
 #!/Users/DanYoung/Envs/flask/bin/python
-
 import datetime
 from functools import wraps
 import json
@@ -17,9 +16,9 @@ from flask import (
 )
 from flask_session import Session
 
-# from auth import 
-from redis_local import r, redis
-from redis_methods import ToDoUser
+from server.authentication import auth
+from server.redis.redis_local import r, redis
+from server.redis.redis_methods import ToDoUser
 
 app = Flask(__name__)
 
@@ -126,6 +125,7 @@ def set_tasks():
             print("An exception was found")
             return e, 201
 
+
 ###################################################################################
 @app.route("/redis/tasks", methods=["GET"])
 @token_required
@@ -158,7 +158,6 @@ def get_tasks_cat(category):
     #     return e, 201
 
 
-
 ###################################################################################
 @app.route("/redis/tasks/<category>/<title>", methods=["GET"])
 @token_required
@@ -173,7 +172,7 @@ def get_task(category, title):
 # TODO: test in postman
 @app.route("/redis/tasks/delete", methods=["DELETE"])
 @token_required
-def delete_task(title):
+def delete_task():
     _get_active_user().delete_one_task(request.json["title"])
     return redirect("/redis/tasks"), 201
 
@@ -191,6 +190,7 @@ def delete_multiple_tasks():
 
 ###################################################################################
 
+
 @app.errorhandler(404)
 def not_found(error):
     return make_response(jsonify({"error": "Not found"}), 404)
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 
 # TODO: Pagination argument
 # TODO: SEARCH
-# TODO: Currently, you may or may not be able to have multiple 
-    # tasks with the same ID in different categories. Going to cause
-    # bugs in deletion 
+# TODO: Currently, you may or may not be able to have multiple
+# tasks with the same ID in different categories. Going to cause
+# bugs in deletion
 # TODO: Memoize _get_active_user() ???

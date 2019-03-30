@@ -9,3 +9,7 @@ redis.conf
 dump.rdb
 *__pycache__
 test_env/example_data.py
+*databaseconfig.py
+*example_data.py
+*.pytest_cache
+*google_api_config.py

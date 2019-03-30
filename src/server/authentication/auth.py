@@ -5,14 +5,13 @@ from flask import jsonify, redirect, request, session, url_for
 from flask_httpauth import HTTPBasicAuth, make_response
 from requests_oauthlib import OAuth2Session
 
-from app import app
-from config.databaseconfig import *
+from server.authentication.google_api_config import *
 
 # Session storage in Redis at 127.0.0.1:6389
 
 
 # TODO: Set the cookie TTL here. By default Flask, issues cookies which expire in
-# a month. May want to consider a shorter timeline
+# a month. Consider a shorter timeline
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 

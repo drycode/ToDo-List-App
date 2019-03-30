@@ -1,13 +1,14 @@
 from datetime import datetime
 from hashlib import blake2b
 
-from redis_local import r
+from server.redis.redis_local import r
 
 # TODO: Include subtasks in Hash model
 class ToDoUser:
     """
     All ToDo list tasks are centralized in this ToDoUser class.
     """
+
     def __init__(self, user_obj):
         self.userid = user_obj["id"]
         self.name = user_obj["name"]
@@ -17,7 +18,7 @@ class ToDoUser:
 
     # All Create/Update functions will begin here and will continue through
     # to the next explicit comment.
-    
+
     # Sets up all parts of the hash map
     # TODO: Refactor to put set methods into helper functions
     # TODO: Redis transactions?...
@@ -28,7 +29,9 @@ class ToDoUser:
         Task_ids are used in subsequent queries for accessing hash map of specific task
         field data,
         """
-        task_id, task_obj, task_hash_key, due_date = self._initialize_redis_task(task_obj)
+        task_id, task_obj, task_hash_key, due_date = self._initialize_redis_task(
+            task_obj
+        )
         self._initialize_redis_hashmap(task_hash_key, task_obj)
 
         # Stores all of the user's task_id keys
@@ -119,6 +122,7 @@ class ToDoUser:
 
     """Class based helper functions will begin here and will continue through to the next
     explicit comment."""
+
     def _initialize_redis_task(self, task_obj):
         task_id = self._blake2b_hash_title(task_obj["title"])
 
@@ -169,8 +173,8 @@ class ToDoUser:
         )
         return date
 
-    def _get_tasks(self, tasks):
-        return (r.hgetall(self.mykey + task) for task in tasks)
+    def _get_tasks(self, task_ids):
+        return (r.hgetall(self.mykey + task) for task in task_ids)
 
     def _blake2b_hash_title(self, string):
         h = blake2b(digest_size=10)
