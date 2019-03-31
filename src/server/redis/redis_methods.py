@@ -139,11 +139,6 @@ class ToDoUser:
         except:
             print("Error in hash_map processing of task {task_obj}")
 
-    # Creates integer value of datetime
-    def _convert_datetime(self, date):
-        date = date.strftime("%Y%m%d%H%M%S")
-        return int(date)
-
     def _stringify_datetime(self, date):
         year, month, day, hour, minute, second = map(
             int, (date[0:4], date[4:6], date[6:8], date[8:10], date[10:12], date[12:14])
@@ -188,6 +183,7 @@ class ToDoUser:
 
 
 def _convert_dates(task_obj):
+    """Creates integer value from datetime object, and processes missing values"""
     due_str = task_obj.get("due_date", None)
 
     format_template = "%Y%m%d%H%M%S"
