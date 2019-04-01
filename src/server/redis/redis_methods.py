@@ -87,12 +87,11 @@ class ToDoUser:
             tasks_data.append(self._delete_one_task(title))
 
         for task_id, category in tasks_data:
-            print(task_id, category)
             hash_key = self.mykey + str(task_id)
             r.hdel(hash_key, "*")
             r.srem(self.my_task_ids, task_id)
-            r.srem(self.mykey + category + "_task_ids:", task_id)
-            r.zrem(self.mykey + "due_sort_all_task_ids:", task_id)
+            r.srem(self.mykey + category + "_task_ids", task_id)
+            r.zrem(self.mykey + "due_sort_all_task_ids", task_id)
 
     # Class Based Helper Function
 
@@ -136,9 +135,8 @@ class ToDoUser:
         Deletes a single task given a specific task title.
         """
         task_id = _blake2b_hash_title(title)
-        category = r.hget(self.mykey + task_id, "category")
-        # self.delete_tasks_by_category(category, task_id)
-        return task_id, category
+        category = r.hmget(self.mykey + str(task_id), "category")
+        return task_id, category[0]
 
     # Dunder Methods
 

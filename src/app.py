@@ -185,20 +185,9 @@ def get_duedate_range():
 # TODO: test in postman
 @app.route("/redis/tasks/delete", methods=["DELETE"])
 @token_required
-def delete_task():
-    _get_active_user().delete_one_task(request.json["title"])
+def delete_tasks():
+    _get_active_user().delete_tasks(request.json["titles"])
     return redirect("/redis/tasks"), 201
-
-
-###################################################################################
-# TODO: test in postman
-@app.route("/redis/tasks/delete", methods=["DELETE"])
-@token_required
-def delete_multiple_tasks():
-    _get_active_user().delete_tasks_by_category(
-        request.json["category"], request.json["task_ids"]
-    )
-    return get_all_tasks()
 
 
 ###################################################################################
