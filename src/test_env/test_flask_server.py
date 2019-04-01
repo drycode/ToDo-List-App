@@ -9,12 +9,11 @@ from server.redis.redis_methods import (
     ToDoUser,
     _blake2b_hash_title,
     _convert_dates,
-    _initialize_redis_hashmap,
     _stringify_datetime,
 )
 
 
-r = FakeStrictRedis()
+red_instance = FakeStrictRedis()
 
 user_obj = {
     "email": "testytest@gmail.com",
@@ -56,7 +55,7 @@ task_objs = [
 ]
 
 
-user = ToDoUser(user_obj, r)
+user = ToDoUser(user_obj, r=red_instance)
 
 for i, task in enumerate(task_objs):
     user.set_task(task_objs[i])
@@ -70,11 +69,12 @@ class TestToDoUser:
 
     def test_get_one_task(self):
         actual = user.get_one_task("Grocery Shop")
+        print(actual)
         assert actual == {
-            "title": "Grocery Shop",
-            "category": "chores",
-            "date_created": "201901201521",
-            "due_date": "",
+            b"title": b"Grocery Shop",
+            b"category": b"chores",
+            b"date_created": b"201901201521",
+            b"due_date": b"",
         }
 
     def test_get_category_tasks(self):
@@ -82,8 +82,8 @@ class TestToDoUser:
         assert isinstance(x, GeneratorType) == True
         assert isinstance(next(x), object) == True
 
-    def test_get_date_range(self):
-        x = user.get_date_range(201901201518, 201901201524)
+    def test_get_duedate_range(self):
+        x = user.get_duedate_range(201901201518, 201901201524)
         assert isinstance(x, GeneratorType) == True
         assert isinstance(next(x), object) == True
         # Check the items in the generator
@@ -92,14 +92,51 @@ class TestToDoUser:
     def test_get_user_id(self):
         assert user.get_user_id() == "230872340987520234985"
 
-    def test__repr__(self):
-        assert ToDoUser(user_obj, r).__repr__() == (
-            "User(user_id: '230872340987520234985', name: 'Brian Fredericks', tasks: 4)"
+    def test__set_subtasks(self):
+        assert (
+            user._set_sub_tasks("fb4b0dc2756d5131a6f5", "Tomatos", "Brocolli", "Meat")
+            == None
         )
+
+    def test__get_subtasks(self):
+        assert user._get_sub_tasks("fb4b0dc2756d5131a6f5") == [
+            b"Tomatos",
+            b"Brocolli",
+            b"Meat",
+        ]
+
+    @mark.parametrize(
+        "user_input,expected",
+        {
+            (
+                ToDoUser(user_obj, red_instance),
+                "User(user_id: '230872340987520234985', name: 'Brian Fredericks', tasks: 4)",
+            ),
+            (
+                ToDoUser(
+                    {
+                        "email": "notasks@gmail.com",
+                        "family_name": "Jones",
+                        "given_name": "Jeffrey",
+                        "id": "230872345620234985",
+                        "link": "https://plus.google.com/230872345620234985",
+                        "locale": "en",
+                        "name": "Jeffrey Jones",
+                        "picture": "https://lh3.googleusercontent.com/photo.jpg",
+                        "verified_email": "true",
+                    },
+                    red_instance,
+                ),
+                "User(user_id: '230872345620234985', name: 'Jeffrey Jones', tasks: 0)",
+            ),
+        },
+    )
+    def test__repr__(self, user_input, expected):
+        assert user_input.__repr__() == (expected)
 
     def test__delete_one_task(self):
         actual = user._delete_one_task("Grocery Shop")
-        assert actual == ("fb4b0dc2756d5131a6f5", "chores")
+        assert actual == ("fb4b0dc2756d5131a6f5", b"chores")
 
     def test_delete_tasks(self):
         user.delete_tasks(["Grocery Shop"])

@@ -2,7 +2,7 @@ import redis
 
 from server.redis.redis_config import *
 
-r = redis.StrictRedis(
+redis_instance = redis.StrictRedis(
     host=rconf["REDIS_HOST"],
     port=rconf["REDIS_PORT"],
     password=rconf["REDIS_PASSWORD"],

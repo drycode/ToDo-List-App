@@ -17,7 +17,7 @@ from flask import (
 from flask_session import Session
 
 from server.authentication import auth
-from server.redis.redis_local import r, redis
+from server.redis.redis_local import redis_instance, redis
 from server.redis.redis_methods import ToDoUser
 
 app = Flask(__name__)
@@ -78,8 +78,8 @@ def hello_redis():
     try:
         # The decode_repsonses flag here directs the client to convert the responses from Redis into Python strings
         # using the default encoding utf-8.  This is client specific.
-        r.set("msg:hello", "Hello Redis!!!")
-        msg = r.get("msg:hello")
+        redis_instance.set("msg:hello", "Hello Redis!!!")
+        msg = redis_instance.get("msg:hello")
         return msg, 201
 
     except Exception as e:
