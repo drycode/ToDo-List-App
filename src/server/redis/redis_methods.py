@@ -13,7 +13,7 @@ class ToDoUser:
     All ToDo list tasks are centralized in this ToDoUser class.
     """
 
-    def __init__(self, user_obj):
+    def __init__(self, user_obj, r=r):
         self.userid = user_obj["id"]
         self.name = user_obj["name"]
         self.mykey = "Todos:users:" + str(self.userid) + ":tasks:"
@@ -61,7 +61,7 @@ class ToDoUser:
         for item in self._get_tasks(tasks):
             yield item
 
-    def get_date_range(self, start, end):
+    def get_duedate_range(self, start, end):
         """
         Returns a generator object with the hash results of task_id keys with due dates
         between ``start`` and ``end``.
@@ -78,28 +78,21 @@ class ToDoUser:
         return self.userid
 
     # Delete Methods
-    def delete_tasks_by_category(self, category, task_ids):
+    def delete_tasks(self, titles):
         """
         Must give the category along with a potential list of task_ids
         """
-        print(task_ids)
-        print(category)
-        keys = [self.mykey + str(task_ids) for key in task_ids]
-        for key in keys:
-            r.delete(key)
-        for task in task_ids:
-            task = _blake2b_hash_title(task)
-            r.srem(self.my_task_ids, task)
-            r.srem(self.mykey + category + "_task_ids", task)
-            r.zrem(self.mykey + "due_sort_all_task_ids", task)
+        tasks_data = []
+        for title in titles:
+            tasks_data.append(self._delete_one_task(title))
 
-    def delete_one_task(self, title):
-        """
-        Deletes a single task given a specific task title.
-        """
-        task_id = _blake2b_hash_title(title)
-        category = r.hget(self.mykey + task_id, "category")
-        self.delete_tasks_by_category(category, task_id)
+        for task_id, category in tasks_data:
+            print(task_id, category)
+            hash_key = self.mykey + str(task_id)
+            r.hdel(hash_key, "*")
+            r.srem(self.my_task_ids, task_id)
+            r.srem(self.mykey + category + "_task_ids:", task_id)
+            r.zrem(self.mykey + "due_sort_all_task_ids:", task_id)
 
     # Class Based Helper Function
 
@@ -129,7 +122,7 @@ class ToDoUser:
         return task_id, task_obj, task_hash_key
 
     def _get_tasks(self, task_ids):
-        return (r.hgetall(self.mykey + task) for task in task_ids)
+        return (r.hgetall(self.mykey + str(task)) for task in task_ids)
 
     def _set_sub_tasks(self, task_id, subtasks=[]):
         r.rpush(self.mykey + task_id, subtasks)
@@ -137,6 +130,15 @@ class ToDoUser:
     def _get_sub_tasks(self, task_id):
         subtask_list = r.lrange(self.mykey + task_id, 0, r.llen(self.mykey + task_id))
         return subtask_list
+
+    def _delete_one_task(self, title):
+        """
+        Deletes a single task given a specific task title.
+        """
+        task_id = _blake2b_hash_title(title)
+        category = r.hget(self.mykey + task_id, "category")
+        # self.delete_tasks_by_category(category, task_id)
+        return task_id, category
 
     # Dunder Methods
 
@@ -157,12 +159,14 @@ class ToDoUser:
 # General Helper Functions
 def _convert_dates(task_obj):
     """Creates integer value from datetime object, and processes missing values"""
-    due_str = task_obj.get("due_date", None)
+    due_str = task_obj.get("due_date", "")
+    print(due_str)
 
     format_template = "%Y%m%d%H%M%S"
     created_str = task_obj.get(
         "date_created", datetime.strftime(datetime.utcnow(), format_template)
     )
+    print(due_str)
     if due_str:
         return int(created_str), int(due_str)
     return int(created_str), ""

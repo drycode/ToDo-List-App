@@ -168,6 +168,19 @@ def get_task(category, title):
 
 
 ###################################################################################
+@app.route("/redis/tasks/dates", methods=["GET"])
+@token_required
+def get_duedate_range():
+    tasks = [
+        task
+        for task in _get_active_user().get_duedate_range(
+            request.json["start"], request.json["end"]
+        )
+    ]
+    return jsonify(tasks), 201
+
+
+###################################################################################
 
 # TODO: test in postman
 @app.route("/redis/tasks/delete", methods=["DELETE"])
