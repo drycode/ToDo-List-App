@@ -85,4 +85,4 @@ _-- These task_ids can then be used to query the hash map representation of the 
 
 [open-url]: https://img.shields.io/github/issues-raw/danyoungmusic93/todo-list-app.svg
 [last-commit]: https://img.shields.io/github/last-commit/danyoungmusic93/todo-list-app.svg
-[coverage]: ./src/coverage.svg
+[coverage]: ./api/coverage.svg
