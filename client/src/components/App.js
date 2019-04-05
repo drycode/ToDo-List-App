@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import "../App.css";
-import TodosContainer from "./TodoList";
+import TodoList from "./TodoList";
 
 class App extends Component {
   render() {
@@ -9,7 +9,7 @@ class App extends Component {
         <div className="header">
           <h1>Todo List</h1>
         </div>
-        <TodosContainer />
+        <TodoList />
       </div>
     );
   }
