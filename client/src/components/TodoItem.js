@@ -1,12 +1,10 @@
 import React from "react";
 
-const TodoItem = props => {
+const TodoItem = ({ task }) => {
   return (
     <div>
-      <input className="taskCheckbox" type="checkbox" />
-      <label className="taskLabel">{props.task.title}</label>
-      <div className="dueDate">{props.task.due_date}</div>
-      <span className="deleteTaskBtn">DELETE BUTTON COMPONENT</span>
+      <div className="title">{task.title}</div>
+      <div className="dueDate">{task.due_date}</div>
     </div>
   );
 };
