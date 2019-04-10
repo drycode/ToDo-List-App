@@ -3,7 +3,7 @@ import axios from "axios";
 export const fetchTasks = () => async dispatch => {
   const response = await axios.get("/redis/tasks");
   dispatch({
-    type: "FETCH_POSTS",
+    type: "FETCH_TASKS",
     payload: response
   });
 };

@@ -13,7 +13,7 @@ class GoogleAuth extends React.Component {
 
   onSignInClick = async () => {
     const response = await axios.get("/login");
-    console.log(response);
+    // console.log(response);
 
     // this.setState({ activeUser: response, isSignedIn: true });
 
@@ -22,7 +22,7 @@ class GoogleAuth extends React.Component {
   onSignOutClick = async () => {
     await axios.get("/logout");
     this.setState({ activeUser: {}, isSignedIn: false });
-    console.log(this.state.activeUser.data);
+    // console.log(this.state.activeUser.data);
   };
 
   renderAuthButton() {
