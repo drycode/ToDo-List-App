@@ -1,14 +1,20 @@
 import React, { Component } from "react";
-import TodoItem from "./TodoItem";
+import { connect } from "react-redux";
+import { fetchTasks } from "../actions";
+import TaskItem from "./TaskItem";
 import axios from "axios";
-import { CategorySelector } from "./CategorySelector";
 
-class TodoListContainer extends Component {
+class TaskList extends Component {
   state = {
     todos: [],
     categories: new Set(),
     selectedCategory: null
   };
+
+  componentDidMount() {
+    this.props.fetchTasks();
+    this.getTodos();
+  }
 
   getTodos = async () => {
     const response = await axios.get("/redis/tasks");
@@ -27,10 +33,6 @@ class TodoListContainer extends Component {
     );
     this.setState({ todos: response.data });
   };
-
-  componentDidMount() {
-    this.getTodos();
-  }
 
   retrieveCategories() {
     const categories = new Set();
@@ -57,19 +59,13 @@ class TodoListContainer extends Component {
       return (
         <div>
           <div>
-            <CategorySelector
-              categories={this.state.categories}
-              selectedCategory={this.state.selectedCategory}
-            />
-          </div>
-          <div>
             <ul>
               {this.state.todos.map(todo => {
                 return (
                   <div>
                     <li className="task" todo={todo} key={todo.id}>
                       {todo.category}
-                      <TodoItem task={todo} />
+                      <TaskItem task={todo} />
                     </li>
                   </div>
                 );
@@ -87,4 +83,7 @@ class TodoListContainer extends Component {
   }
 }
 
-export default TodoListContainer;
+export default connect(
+  null,
+  { fetchTasks }
+)(TaskList);
