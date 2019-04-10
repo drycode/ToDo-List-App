@@ -9,24 +9,18 @@ class TaskList extends Component {
   }
 
   renderTasks = tasks => {
-    console.log(tasks);
     if (tasks) {
       return (
-        <div>
-          <div>
-            <ul>
-              {tasks.map(task => {
-                return (
-                  // TODO:  Get task id for Key from api using action creator
+        <div className="ui middle aligned animated selection divided list">
+          {tasks.map(task => {
+            return (
+              // TODO:  Get task id for Key from api using action creator
 
-                  <li className="task">
-                    {task.category}
-                    <TaskItem task={task} />
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+              <div className="item">
+                <TaskItem task={task} />
+              </div>
+            );
+          })}
         </div>
       );
     }
