@@ -37,7 +37,6 @@ def _get_active_user():
         active_user = ToDoUser(obj)
     else:
         active_user = False
-    print(active_user)
     return active_user
 
 
@@ -110,19 +109,20 @@ def logout():
 # WARNING: eval() method in this route flow. Secure requests on frontend
 
 ###################################################################################
+# TODO: Check tests against this route
 @app.route("/redis/tasks", methods=["POST"])
 @token_required
-def set_tasks():
+def set_task():
     if not request.json:
         abort(400)
     else:
         try:
-            for task in request.json:
-                print(task)
-                _get_active_user().set_task(task)
+            task = request.json
+            print(task)
+            _get_active_user().set_task(task)
             return str(request.json), 201
         except Exception as e:
-            print("An exception was found")
+            print(f"Invalid input returned from client application: {request.json}")
             return e, 201
 
 
