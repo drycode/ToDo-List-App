@@ -9,7 +9,7 @@ class TaskList extends Component {
   }
 
   renderTasks = tasks => {
-    if (tasks) {
+    if (tasks.length > 0) {
       return (
         <div className="ui middle aligned animated selection divided list">
           {tasks.map(task => {
@@ -26,7 +26,7 @@ class TaskList extends Component {
     }
   };
   render() {
-    return <div>{this.renderTasks(this.props.tasks.data)}</div>;
+    return <div>{this.renderTasks(this.props.tasks)}</div>;
   }
 }
 

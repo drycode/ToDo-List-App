@@ -1,13 +1,29 @@
 import React from "react";
 import { Field, reduxForm } from "redux-form";
+import { connect } from "react-redux";
+import { createTask } from "../actions";
 
 class TaskCreate extends React.Component {
-  renderInput({ input, placeholder, meta }) {
-    console.log(meta);
+  renderError = ({ error, touched }) => {
+    if (touched && error) {
+      return (
+        <div className="ui mini error message">
+          <div className="header">{error}</div>
+        </div>
+      );
+    }
+  };
+
+  renderInput = ({ input, placeholder, meta }) => {
     return (
       <>
         <div className="ui fluid input">
-          <input type="text" placeholder={placeholder} {...input} />
+          <input
+            type="text"
+            placeholder={placeholder}
+            {...input}
+            autoComplete="off"
+          />
           <div
             className="ui icon button"
             data-tooltip="Add an optional due date to your task"
@@ -15,59 +31,54 @@ class TaskCreate extends React.Component {
             <i class="calendar icon button" />
           </div>
         </div>
-        {/* <div>
-          <div class="ui error message">
-            <div class="header">{meta.error}</div>
-          </div>
-        </div> */}
+        {this.renderError(meta)}
       </>
     );
-  }
-  renderCategoryInput({ input, placeholder, meta }) {
-    console.log(meta);
+  };
+  renderCategoryInput = ({ input, placeholder, meta }) => {
     return (
       <>
         <div className="ui fluid input">
-          <input type="text" placeholder={placeholder} {...input} />
+          <input
+            type="text"
+            placeholder={placeholder}
+            {...input}
+            autoComplete="off"
+          />
         </div>
-        {/* <div>
-          <div class="ui error message">
-            <div class="header">{meta.error}</div>
-          </div>
-        </div> */}
+        {this.renderError(meta)}
         <button className="ui button primary" style={{ float: "right" }}>
           Submit
         </button>
       </>
     );
-  }
+  };
 
   renderForm() {
     return (
-      <form onSubmit={this.props.handleSubmit(this.onSubmit)}>
+      <form
+        className="ui form error"
+        onSubmit={this.props.handleSubmit(this.onSubmit)}
+      >
         <h4 style={{ textAlign: "left" }}>Create New Task</h4>
-        <div>
-          <Field
-            name="title"
-            component={this.renderInput}
-            placeholder="Add a task..."
-          />
-        </div>
-        <div>
-          <Field
-            name="category"
-            component={this.renderCategoryInput}
-            placeholder="...and a category"
-          />
-          {/* <Field name="due_date" component={this.renderInput} /> */}
-        </div>
+        <Field
+          name="title"
+          component={this.renderInput}
+          placeholder="Add a task..."
+        />
+        <Field
+          name="category"
+          component={this.renderCategoryInput}
+          placeholder="...and a category"
+        />
+        {/* <Field name="due_date" component={this.renderInput} /> */}
       </form>
     );
   }
 
-  onSubmit(formValues) {
-    // console.log(formValues);
-  }
+  onSubmit = formValues => {
+    this.props.createTask(formValues);
+  };
 
   render() {
     return this.renderForm();
@@ -86,7 +97,12 @@ const validate = formValues => {
   return errors;
 };
 
-export default reduxForm({
+const formWrapped = reduxForm({
   form: "taskCreate",
   validate
 })(TaskCreate);
+
+export default connect(
+  null,
+  { createTask }
+)(formWrapped);

@@ -127,7 +127,13 @@ class ToDoUser:
         return task_id, task_obj, task_hash_key
 
     def _get_tasks(self, task_ids):
-        return (self.r.hgetall(self.mykey + str(task)) for task in task_ids)
+        task_objs = []
+        for task in task_ids:
+            task_obj = self.r.hgetall(self.mykey + str(task))
+            task_obj.update({"key":task})
+            task_objs.append(task_obj)
+        return task_objs
+
 
     def _set_sub_tasks(self, task_id, *subtasks):
         print(*subtasks)

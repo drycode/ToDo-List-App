@@ -11,18 +11,21 @@ class App extends React.Component {
     return (
       <div className="ui container">
         <Header />
-
         <div className="ui grid">
           <div className="three wide column">
             <NavBar />
           </div>
+
           <div className="eight wide column">
             <div className="header">
               <h1>Todo List</h1>
               <TaskCreate />
             </div>
-            <TaskList />
+            <div className="ui container" style={{ marginTop: "35px" }}>
+              <TaskList />
+            </div>
           </div>
+
           <div className="five wide column">
             <h1>SubTasks List</h1>
           </div>

@@ -104,12 +104,7 @@ def logout():
     auth.logout()
     return redirect("/login")
 
-
-# ROUTES
-# WARNING: eval() method in this route flow. Secure requests on frontend
-
 ###################################################################################
-# TODO: Check tests against this route
 @app.route("/redis/tasks", methods=["POST"])
 @token_required
 def set_task():
@@ -125,6 +120,10 @@ def set_task():
             print(f"Invalid input returned from client application: {request.json}")
             return e, 201
 
+
+###################################################################################
+
+# TODO: Implement "PATCH" method to edit task item
 
 ###################################################################################
 @app.route("/redis/tasks", methods=["GET"])
