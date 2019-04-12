@@ -132,7 +132,7 @@ class ToDoUser:
             task_obj = self.r.hgetall(self.mykey + str(task))
             task_obj.update({"key":task})
             task_objs.append(task_obj)
-        return task_objs
+            yield task_obj
 
 
     def _set_sub_tasks(self, task_id, *subtasks):

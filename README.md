@@ -1,6 +1,6 @@
 # ToDo List API
 
-> This project is a fairly standard ToDo list CRUD API using Flask and Redis.
+> This project features a robust Todo list CRUD API using Flask and Redis and a React/Redux front end.
 
 ![last-commit][last-commit]
 ![open-issues][open-url]

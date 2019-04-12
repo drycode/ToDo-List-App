@@ -158,7 +158,7 @@ class TestToDoUser:
     def test__get_tasks(self):
         x = user._get_tasks([0, 1, 2, 3])
         assert isinstance(x, GeneratorType) == True
-        assert next(x) == {}
+        assert next(x) == {'key': 0}
 
     @mark.parametrize(
         "hash_input,expected",
