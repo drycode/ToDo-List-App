@@ -78,6 +78,7 @@ class TaskCreate extends React.Component {
 
   onSubmit = formValues => {
     this.props.createTask(formValues);
+    window.location.reload();
   };
 
   render() {

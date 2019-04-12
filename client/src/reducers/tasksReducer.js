@@ -16,6 +16,8 @@ export default (state = {}, action) => {
       return action.payload;
     case CREATE_TASK:
       return { ...state, [action.payload.title]: action.payload };
+    case CATEGORY_TASKS:
+      return action.payload;
     default:
       return state;
   }

@@ -1,4 +1,5 @@
 import axios from "axios";
+
 import {
   SIGN_IN,
   SIGN_OUT,
@@ -6,6 +7,7 @@ import {
   FETCH_TASK,
   CREATE_TASK,
   DELETE_TASK,
+  FETCH_CATEGORIES,
   CATEGORY_TASKS
 } from "./types";
 
@@ -58,10 +60,22 @@ export const deleteTask = title => async dispatch => {
   });
 };
 
+export const fetchCategories = () => async dispatch => {
+  const response = await axios.get("/redis/tasks");
+  const categories = [];
+  response.data.map(task => {
+    return categories.push(task.category);
+  });
+  dispatch({
+    type: FETCH_CATEGORIES,
+    payload: categories
+  });
+};
+
 export const categoryTasks = category => async dispatch => {
   const response = await axios.get(`/redis/tasks/${category}`);
   dispatch({
     type: CATEGORY_TASKS,
-    payload: response
+    payload: response.data
   });
 };

@@ -5,5 +5,6 @@ export const FETCH_TASK = "FETCH_TASK";
 export const CREATE_TASK = "CREATE_TASK";
 export const DELETE_TASK = "DELETE_TASK";
 // export const EDIT_TASK = "EDIT_TASK";
+export const FETCH_CATEGORIES = "FETCH_CATEGORIES";
 export const CATEGORY_TASKS = "CATEGORY_TASKS";
 // export const DUE_TASKS = "DUE_TASKS"
