@@ -1,33 +1,68 @@
 # ToDo List API
 
-> This project features a robust Todo list CRUD API using Flask and Redis and a React/Redux front end.
+> This project features a robust Todo list REST API using Flask and Redis and a React/Redux front end.
 
 ![last-commit][last-commit]
 ![open-issues][open-url]
 ![coverage][coverage]
 
-In an attempt to learn more about the use of a strict key/value store, I started creating ToDo task items in the Redis CLI. After a few hours of building different representations of task items, I decided to build out a full API in Flask.
+In an attempt to learn more about the use of a strict key/value store, I started creating ToDo task items in the Redis CLI. After a few hours of building different representations of task items, I decided to build out a full API in Flask. This repository reflects both that API project, and a React front end that I build to render it in the browser. 
 
 ## Installation
 
-Be sure to setup a virtual environment to manage dependencies.
+Be sure to first install the latest versions of [Python](https://www.python.org/downloads/) and [React](https://www.tutorialspoint.com/reactjs/reactjs_environment_setup.htm). 
 
+Next by making a clone of this repository. 
 ```sh
-~ python -m virtualenv todo-app
+~ mkdir todo-app
 ~ cd todo-app
 ~ git clone https://github.com/danyoungmusic93/ToDo-List-App
 ```
 
 ## Development setup
 
+Because this repository is monolithic, be sure to create separate dependency management systems for the `./api` and `./client` directories. 
+
 ```sh
-~ source bin/activate
-~ pip install -r requirements.txt
-~ cd server
-~ python app.py
+~ python -m virtualenv api
+::virtual env output::
+~ source bin/activate           //or another command to initiate virtual environment
+~ (api) cd api
+~ (api) pip install -r requirements.txt
+~ (api) which python
+/env/bin/python         // copy the path to the virtual environments version of python
+```
+This will install the primary dependencies for the Python/Flask API portion of our application. You will still need to set up some configuration files, and apply for an API key through [Google's OAuth API](https://developers.google.com/identity/protocols/OAuth2). Once you have your login credentials, be sure to save them in a configuration file at `/todo-app/api/server/authentication/google_api_config.py`. 
+
+The copied PYTHONPATH will be added to the top of the `/todo-app/api/app.py` file in the following shebang format: `#!/env/bin/python`. This allows us to launch our Flask server with the following command and output:
+
+```sh
+~ (api) ./app.py
+ * Serving Flask app "app" (lazy loading)
+ * Environment: production
+   WARNING: Do not use the development server in a production environment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 490-370-085
+```
+
+
+Now lets move onto the client side of our application. 
+
+```sh
+~ (api) cd ..                 
+~ (api) deactivate            // to deactivate the virtual environment  
+~ cd client
+~ npm install                 // installs nodemodules listed in package.json file
+~ npm start
+
 ```
 
 ## REDIS Implementation
+_-- Lower-level concepts for the datastructure minded._
 
 #### Hashmap object storage
 
